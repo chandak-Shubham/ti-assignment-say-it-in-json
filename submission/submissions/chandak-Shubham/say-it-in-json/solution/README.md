@@ -1,53 +1,46 @@
 # PipelineForge Config Migration Harness (`solution/`)
 
-This directory contains the migration converter, JSON schema, reference evaluator, equivalence verifier, and CLI harness for migrating legacy PipelineForge `.pfcfg` configuration files to JSON.
+This folder contains my solution for migrating PipelineForge `.pfcfg` configuration files to JSON. It includes converter, JSON schema,  evaluator,  verifier and the `run.py` which is used to run the complete migration and this checking workkflow. 
 
 ---
 
-## Quick Start (Reviewer Workflow)
+## Quick Start 
 
-To execute the complete migration workflow in **less than 1 minute**:
+From the repository root, run:
 
 ```bash
 cd submissions/chandak-Shubham/say-it-in-json/solution
 python run.py
-```
-
-### What to Expect:
-When invoked, `run.py` executes an automated 5-step pipeline across all sample configurations in `starter/configs/`:
-1. **Conversion**: Parses `.pfcfg` files into JSON format matching `schema.json`.
-2. **Schema Validation**: Validates converted JSON structures.
-3. **Evaluation**: Computes effective settings for both `.pfcfg` and JSON across 5 environment fixtures.
-4. **Equivalence Verification**: Compares effective settings dictionaries to check for matching outputs.
-5. **Report Generation**: Exports machine-readable unmigratable items to `unmigratable_report.json`.
+``` 
 
 ---
 
 ## 1. File Responsibilities
 
 | File | Responsibility |
-| --- | --- |
-| `schema.json` | JSON Schema (Draft 2020-12) defining the target JSON format (`version`, `imports`, `sections`, `overrides`). |
-| `converter.py` | Parser and converter that transforms `.pfcfg` files into JSON structures conforming to `schema.json`. |
-| `evaluator.py` | Reference evaluation engines (`PFCfgEvaluator` and `JSONEvaluator`) that resolve imports, conditionals, and interpolations into effective settings. |
-| `verifier.py` | Equivalence verification engine (`EquivalenceVerifier`) that compares `.pfcfg` vs. JSON effective settings across multi-environment fixtures. |
-| `run.py` | Complete workflow CLI entry point orchestrating conversion, evaluation, verification, and unmigratable reporting. |
-| `unmigratable_report.json` | Machine-readable JSON output containing items that cannot be resolved automatically (e.g. missing environment variables or circular references). |
+|------|----------------|
+| `schema.json` | Defines the JSON structure expected after conversion. |
+| `converter.py` | Parses legacy `.pfcfg` files and converts them into the JSON representation. |
+| `evaluator.py` | Evaluates both `.pfcfg` and JSON configurations to produce effective settings. |
+| `verifier.py` | Compares the effective settings from the old format to new JSON configurations across environment fixtures. |
+| `run.py` | Runs the complete conversion, validation, evaluation, verification, and reporting workflow. |
+| `unmigratable_report.json` | Generated report listing configuration items that could not be resolved automatically. |
 
 ---
 
 ## 2. Prerequisites & Setup
 
-- **Python**: Python 3.8+ (uses standard library modules: `json`, `re`, `argparse`, `pathlib`, `glob`).
-- **Dependencies**: Zero mandatory third-party dependencies required.
-- **Schema Validation**: `converter.py` provides `validate_converted_json()`, which uses built-in version assertions by default. If the `jsonschema` package is installed (`pip install jsonschema`), it additionally performs full draft-2020-12 JSON Schema validation.
+- **Python**: Python 3.8+ or newer
+- **Dependencies**: No third-party dependencies required
+- **Schema Validation**: `converter.py` provides `validate_converted_json()`, which uses built-in version assertions by default. If the `jsonschema` package is installed (`pip install jsonschema`).
 
 ---
 
 ## 3. Usage & CLI Options
 
-### Run Default Workflow
-To process all starter configurations (`starter/configs/`):
+### Run the Complete Workflow
+
+From the `solution/` directory:
 
 ```bash
 python run.py
@@ -64,44 +57,65 @@ python run.py --target starter/configs/customers/globex/pipeline.pfcfg
 python run.py --target starter/configs/customers/globex/
 ```
 
-*(You can also invoke `python verifier.py [path/to/config.pfcfg]` directly to run only the verification CLI.)*
 
 ---
 
-## 4. Effective Settings & Equivalence Concept
+## 4. Effective Settings & Equivalence
 
-- **Effective Settings**: The final, flattened dictionary of section key-value pairs produced after:
-  - Recursively expanding `@include` and `@include_once` file imports.
-  - Evaluating conditional blocks (`@ifdef`, `@ifndef`, `when`) against target environment variables.
-  - Sequentially applying section overrides.
-  - Interpolating environment variable defaults (`${VAR:-default}`) and cross-key references (`$(sec.key)`).
-- **Equivalence**: Evaluated when comparing legacy `.pfcfg` settings against converted JSON settings. A configuration is considered equivalent if evaluating both paths under identical environment variable fixtures yields identical effective settings for the tested environment fixtures.
+By "effective settings", I mean the final values that are obtained after all the rules in a `.pfcfg` file have been processed.
+
+The evaluator handles things like:
+
+- `@include` and `@include_once` files.
+- Conditions such as `@ifdef`, `@ifndef`, and `when`.
+- Overrides between sections.
+- Environment variables such as `${VAR}` and `${VAR:-default}`.
+- References to other keys such as `$(section.key)`.
+
+For equivalence, I wanted to check that the conversion to JSON does not change the actual result of the configuration.
+
+So, for each environment fixture, the original `.pfcfg` file and the converted JSON are evaluated separately using the same environment variables. Their final settings are then compared key by key.
+
+If both produce the same settings, I consider the conversion equivalent for that test environment.
 
 ---
 
 ## 5. Environment Fixtures
 
-The verifier evaluates each configuration against 5 built-in environment variable fixtures:
+The verifier tests the configurations with a few different environment setups. I used these to cover the main conditional and environment-variable cases in the sample configurations.
 
-1. `CI Environment (CI=true)`: `{"CI": "true"}`
-2. `Non-CI Environment (CI unset)`: `{}`
-3. `Production Environment`: `{"PRODUCTION": "true", "CI": "true"}`
-4. `Vault & Beta Environment`: `{"VAULT_ADDR": "https://vault.example.invalid", "FEATURE_BETA": "true", "SLACK_WEBHOOK": "https://hooks.slack.com"}`
-5. `Full Environment (with secrets & endpoints)`: `{"CI": "true", "PRODUCTION": "true", "VAULT_ADDR": "https://vault.example.invalid", "FEATURE_BETA": "true", "REQUIRED_SIGNING_SECRET": "<test-secret>", "REQUIRED_API_ENDPOINT": "https://api.example.invalid"}`
+The five fixtures are:
 
----
+1. **CI Environment** — `CI=true`
+2. **Non-CI Environment** — no `CI` variable is set
+3. **Production Environment** — `PRODUCTION=true` and `CI=true`
+4. **Vault & Beta Environment** — includes `VAULT_ADDR`, `FEATURE_BETA`, and `SLACK_WEBHOOK`
+5. **Full Environment** — includes the above variables as well as the required signing secret and API endpoint.
 
-## 6. Verification Status Definitions
-
-- **`[ PASS ]`**: Effective settings match between legacy `.pfcfg` and JSON with zero unmigratable errors or unresolvable variables for the tested fixture.
-- **`[ UNMIGRATABLE ]`**: Effective settings match structurally between `.pfcfg` and JSON, but unresolvable elements exist (e.g., missing mandatory environment variables without default values, or circular references).
-- **`[ FAIL ]`**: A setting value mismatch exists between `.pfcfg` and JSON, or a conversion/parsing error occurred.
+Using different fixtures is useful because a configuration can behave differently depending on which environment variables are available. It also lets the verifier check that the converted JSON behaves the same way as the original `.pfcfg` under different conditions.
 
 ---
 
-## 7. Unmigratable Report (`unmigratable_report.json`)
+## 6. Verification Status
 
-The unmigratable report is generated at `unmigratable_report.json`. It captures all unresolvable keys in a machine-readable JSON array:
+The verifier gives each test one of three results:
+
+- **`[ PASS ]`**: The original `.pfcfg` and the converted JSON produce the same effective settings, and there are no unresolved variables or references.
+
+- **`[ UNMIGRATABLE ]`**: The original and converted configurations still behave the same, but some value could not be resolved in that environment. For example, a required environment variable may not be set, or there may be a circular reference between keys.
+
+- **`[ FAIL ]`**: The two configurations produce different results, or there is an error while parsing or evaluating the configuration.
+
+I kept `UNMIGRATABLE` separate from `FAIL` because an unresolved value does not necessarily mean that the conversion itself changed the configuration. It is useful to report these cases separately so they can be fixed or checked later.
+---
+
+## 7. Unmigratable Report
+
+Some configurations cannot be fully resolved in every environment. For example, a required environment variable may be missing or two configuration keys may refer to each other and create a circular reference.
+
+Instead of treating these cases as normal failures, the verifier records them separately in `unmigratable_report.json`. This makes it easier to see which parts of the configuration need attention.
+
+The report contains the file, section, key, and reason for each unresolved item. For example:
 
 ```json
 [
@@ -113,5 +127,3 @@ The unmigratable report is generated at `unmigratable_report.json`. It captures 
   }
 ]
 ```
-
-Each entry contains `file` (workspace-relative path), `section`, `key`, and `reason` (`line` if available).
