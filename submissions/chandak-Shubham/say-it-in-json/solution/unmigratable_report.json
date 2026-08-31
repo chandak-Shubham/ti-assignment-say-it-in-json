@@ -27,12 +27,12 @@
     "file": "starter/configs/edge-cases/interpolation-cascade.pfcfg",
     "section": "cascade.loop",
     "key": "a",
-    "reason": "Unresolved $(cascade.loop.a) \u2014 circular reference detected (cascade.loop.b -> cascade.loop.a -> cascade.loop.a)"
+    "reason": "Unresolved $(cascade.loop.a) \u2014 circular reference detected (cascade.loop.a -> cascade.loop.b -> cascade.loop.a)"
   },
   {
     "file": "starter/configs/edge-cases/interpolation-cascade.pfcfg",
     "section": "cascade.loop",
     "key": "b",
-    "reason": "Unresolved $(cascade.loop.b) \u2014 circular reference detected (cascade.loop.b -> cascade.loop.a -> cascade.loop.b)"
+    "reason": "Unresolved $(cascade.loop.b) \u2014 circular reference detected (cascade.loop.a -> cascade.loop.b -> cascade.loop.b)"
   }
 ]
