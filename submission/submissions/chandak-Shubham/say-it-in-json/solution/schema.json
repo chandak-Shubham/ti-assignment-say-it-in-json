@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PipelineForge JSON Pipeline Configuration Schema",
+  "description": "Target JSON Schema for migrating PipelineForge .pfcfg configuration trees to JSON while preserving evaluation semantics, ordering, conditional directives, and variable interpolation.",
+  "type": "object",
+  "required": [
+    "version"
+  ],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "enum": [
+        1
+      ],
+      "description": "Schema format version."
+    },
+    "imports": {
+      "type": "array",
+      "description": "Ordered list of external configuration files to merge before local sections.",
+      "items": {
+        "type": "object",
+        "required": [
+          "path"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Relative file path of the configuration file to include."
+          },
+          "once": {
+            "type": "boolean",
+            "default": false,
+            "description": "If true (@include_once), skips loading if already included in current execution tree."
+          },
+          "when": {
+            "type": "object",
+            "description": "Conditional execution check for inclusion (@ifdef / @ifndef).",
+            "properties": {
+              "env_set": {
+                "type": "string",
+                "description": "Environment variable that must be set and non-empty for this import to execute."
+              },
+              "env_unset": {
+                "type": "string",
+                "description": "Environment variable that must be unset or empty for this import to execute."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "sections": {
+      "type": "object",
+      "description": "Map of section names (e.g., 'build', 'notify.slack') to key-value configuration pairs.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "array"
+          ],
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "overrides": {
+      "type": "array",
+      "description": "Ordered list of conditional blocks (@ifdef/@ifndef) applied after static sections.",
+      "items": {
+        "type": "object",
+        "required": [
+          "when",
+          "sections"
+        ],
+        "properties": {
+          "when": {
+            "type": "object",
+            "description": "Condition required to apply the override sections.",
+            "properties": {
+              "env_set": {
+                "type": "string",
+                "description": "Environment variable that must be set and non-empty."
+              },
+              "env_unset": {
+                "type": "string",
+                "description": "Environment variable that must be unset or empty."
+              }
+            },
+            "additionalProperties": false
+          },
+          "sections": {
+            "type": "object",
+            "description": "Sections and key-value pairs to merge if the condition evaluates to true.",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "array"
+                ],
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
