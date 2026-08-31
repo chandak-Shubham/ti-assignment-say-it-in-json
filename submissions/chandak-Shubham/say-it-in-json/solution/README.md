@@ -107,6 +107,7 @@ The verifier gives each test one of three results:
 - **`[ FAIL ]`**: The two configurations produce different results, or there is an error while parsing or evaluating the configuration.
 
 I kept `UNMIGRATABLE` separate from `FAIL` because an unresolved value does not necessarily mean that the conversion itself changed the configuration. It is useful to report these cases separately so they can be fixed or checked later.
+
 ---
 
 ## 7. Unmigratable Report
