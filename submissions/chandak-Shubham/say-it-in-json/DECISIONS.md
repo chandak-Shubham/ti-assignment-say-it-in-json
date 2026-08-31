@@ -53,3 +53,15 @@ There are a few areas that I would improve with more time:
 - The `unmigratable_report.json` identifies the file, section, and key, but it does not currently give the exact source line from the original `.pfcfg` file.
 - The evaluator does not handle every possible form of nested or dynamically constructed environment-variable expansion.
 - The verifier only checks the environment fixtures that are currently defined, so additional environment combinations could still reveal cases that are not covered by the tests.
+
+## 5. What I Would Build Next with Four More Hours
+
+If I had more time, I would focus on improving testing, error reporting, and usability.
+
+- **More test cases:** Add more `.pfcfg` examples and environment combinations to cover cases that are not present in the current fixtures.
+
+- **Better error reporting:** Add source line numbers to `unmigratable_report.json` so it is easier to find the exact problem in the original configuration.
+
+- **More robust interpolation handling:** Extend the evaluator to support more complex nested or dynamically constructed environment-variable references.
+
+- **Improved verification output:** Make verification failures easier to understand by showing which key differs and what value was produced by the original and converted configurations.
