@@ -1,4 +1,4 @@
-# PipelineForge Config Migration Harness (`solution/`)
+# PipelineForge Migration (`solution/`)
 
 This folder contains my solution for migrating PipelineForge `.pfcfg` configuration files to JSON. It includes converter, JSON schema,  evaluator,  verifier and the `run.py` which is used to run the complete migration and this checking workkflow. 
 
@@ -99,6 +99,17 @@ Using different fixtures is useful because a configuration can behave differentl
 ## 6. Verification Status
 
 The verifier gives each test one of three results:
+<<<<<<< HEAD
+=======
+
+- **`[ PASS ]`**: The original `.pfcfg` and the converted JSON produce the same effective settings, and there are no unresolved variables or references.
+
+- **`[ UNMIGRATABLE ]`**: The original and converted configurations still behave the same, but some value could not be resolved in that environment. For example, a required environment variable may not be set, or there may be a circular reference between keys.
+
+- **`[ FAIL ]`**: The two configurations produce different results, or there is an error while parsing or evaluating the configuration.
+
+I kept `UNMIGRATABLE` separate from `FAIL` because an unresolved value does not necessarily mean that the conversion itself changed the configuration. It is useful to report these cases separately so they can be fixed or checked later.
+>>>>>>> a313925b4345c32380ebe72ab1af58ab0aab5d73
 
 - **`[ PASS ]`**: The original `.pfcfg` and the converted JSON produce the same effective settings, and there are no unresolved variables or references.
 
@@ -127,3 +138,4 @@ The report contains the file, section, key, and reason for each unresolved item.
   }
 ]
 ```
+
